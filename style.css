@@ -1,0 +1,164 @@
+:root {
+  --bg: #0f172a;
+  --card: #1e293b;
+  --card-hover: #263449;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --accent: #38bdf8;
+
+  --radius: 14px;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: system-ui, Arial, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.app {
+  width: min(95%, 650px);
+  margin: auto;
+  padding: clamp(14px, 3vw, 28px);
+}
+
+header {
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+header h1 {
+  font-size: clamp(22px, 4vw, 34px);
+  margin: 0;
+}
+
+header p {
+  color: var(--muted);
+  font-size: clamp(12px, 2.5vw, 15px);
+}
+
+/* ---------------- Cards ---------------- */
+
+.card {
+  background: var(--card);
+  padding: clamp(12px, 2.5vw, 18px);
+  margin-bottom: 15px;
+  border-radius: var(--radius);
+}
+
+/* ---------------- Inputs ---------------- */
+
+input,
+select {
+  width: 100%;
+  padding: 12px;
+  border-radius: 10px;
+  border: 1px solid #334155;
+  background: #0b1220;
+  color: var(--text);
+}
+
+/* ---------------- Buttons ---------------- */
+
+button {
+  padding: 12px;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  background: #334155;
+  color: var(--text);
+  transition: 0.2s;
+  font-size: 14px;
+}
+
+button:hover {
+  background: #475569;
+}
+
+/* Generate button */
+
+#generateBtn {
+  width: 100%;
+  background: linear-gradient(135deg, #38bdf8, #6366f1);
+  font-weight: 600;
+}
+
+/* ---------------- Processing ---------------- */
+
+/* ---------------- Processing Section ---------------- */
+
+.progress-section {
+  display: none;
+  margin-top: 18px;
+}
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: #334155;
+  border-radius: 999px;
+  overflow: hidden;
+  margin-top: 10px;
+}
+
+/* actual filling bar */
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #38bdf8, #22c55e);
+  border-radius: 999px;
+  transition: width 0.2s linear;
+}
+
+#statusText {
+  margin-top: 10px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+/* ---------------- Output Controls ---------------- */
+
+.controls-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 15px;
+}
+
+.controls-bar button {
+  height: 44px;
+  min-width: 70px;
+  font-size: 15px;
+}
+
+.volume-group {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.vol-icon {
+  font-size: 20px;
+}
+
+#volumeControl {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+/* ---------------- Reset & Share ---------------- */
+
+.reset-share {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.reset-share button {
+  flex: 1;
+}
