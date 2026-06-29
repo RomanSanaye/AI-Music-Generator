@@ -6,17 +6,21 @@ const generateBtn = document.getElementById("generateBtn");
 const statusText = document.getElementById("statusText");
 
 const progressSection = document.querySelector(".progress-section");
-const progressBar = document.querySelector(".progress-bar");
+const progressFill = document.querySelector(".progress-fill");
 
 const audioPlayer = document.getElementById("audioPlayer");
 const playBtn = document.getElementById("playBtn");
 const volumeControl = document.getElementById("volumeControl");
 const downloadBtn = document.getElementById("downloadBtn");
-const progressFill = document.querySelector(".progress-fill");
+const progressTitle = document.getElementById("progressTitle");
 
+// --------------------
+// GLOBAL STATE (IMPORTANT FIX)
+// --------------------
 let selectedFile = null;
 let selectedInstrument = "";
 let isPlaying = false;
+let progressActive = false;
 
 // --------------------
 // Upload file
@@ -28,16 +32,17 @@ fileInput.addEventListener("change", (e) => {
     ? `Selected: ${selectedFile.name}`
     : "No file selected";
 
-  // Reset player state
+  // reset player
   audioPlayer.pause();
   audioPlayer.src = "";
   isPlaying = false;
   playBtn.textContent = "▶ Play";
 
-  // Hide progress section
+  // reset UI
+  statusText.style.color = "#94a3b8";
   progressSection.style.display = "none";
-  progressBar.classList.remove("active");
-  statusText.textContent = "Waiting...";
+  progressFill.style.width = "0%";
+  progressFill.style.background = "#38bdf8";
 });
 
 // --------------------
@@ -50,29 +55,34 @@ instrument.addEventListener("change", (e) => {
 // --------------------
 // Generate
 // --------------------
-generateBtn.addEventListener("click", () => {
+generateBtn.addEventListener("click", async () => {
   if (!selectedFile || !selectedInstrument) {
     alert("Upload file and select an instrument first.");
     return;
   }
 
-  // show UI
+  progressTitle.textContent = "⏳ Processing";
+
+  // start progress
+  progressActive = true;
   progressSection.style.display = "block";
   progressFill.style.width = "0%";
+  progressFill.style.background = "#38bdf8";
+  statusText.style.color = "#94a3b8";
+  statusText.textContent = "Starting...";
 
   let progress = 0;
-  const totalTime = 4000; // 4 seconds
+  const totalTime = 4000;
   const start = Date.now();
 
   function updateProgress() {
-    const elapsed = Date.now() - start;
+    if (!progressActive) return;
 
+    const elapsed = Date.now() - start;
     progress = Math.min((elapsed / totalTime) * 100, 100);
 
-    // update bar
     progressFill.style.width = progress + "%";
 
-    // update status text
     if (progress < 30) {
       statusText.textContent = "Analyzing audio... 🎧";
     } else if (progress < 70) {
@@ -83,31 +93,90 @@ generateBtn.addEventListener("click", () => {
       statusText.textContent = "Almost ready... ✔";
     }
 
-    // finish condition
-    if (progress < 100) {
-      requestAnimationFrame(updateProgress);
-    } else {
-      finishGeneration();
-    }
+    requestAnimationFrame(updateProgress);
   }
 
   updateProgress();
+
+  // -----------------------------
+  // SEND TO BACKEND
+  // -----------------------------
+  const formData = new FormData();
+  formData.append("file", selectedFile);
+  formData.append("instrument", selectedInstrument);
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/generate", {
+      method: "POST",
+      body: formData
+    });
+
+    const data = await response.json();
+
+    // -----------------------------
+    // ERROR HANDLING
+    // -----------------------------
+    if (!response.ok || !data.success) {
+      stopProgressUI(data.detail || data.message || "Upload failed ❌");
+      return;
+    }
+
+    // -----------------------------
+    // SUCCESS
+    // -----------------------------
+    progressActive = false;
+    finishGeneration(data);
+    progressTitle.textContent = "✅ Done!";
+  } catch (error) {
+    stopProgressUI("Server error ❌");
+    console.error(error);
+  }
 });
 
-function finishGeneration() {
-  const url = URL.createObjectURL(selectedFile);
-  audioPlayer.src = url;
+// --------------------
+// STOP PROGRESS (CENTRAL FIX)
+// --------------------
+function stopProgressUI(message) {
+  progressActive = false;
 
-  statusText.textContent = "Completed ✔ Ready to play";
+  progressTitle.textContent = "❌ Processing failed";
+
+  statusText.textContent = message;
+  statusText.style.color = "red";
+
+  progressFill.style.width = "100%";
+  progressFill.style.background = "#ef4444";
 
   setTimeout(() => {
     progressSection.style.display = "none";
     progressFill.style.width = "0%";
+    progressFill.style.background = "#38bdf8";
+    progressTitle.textContent = "⏳ Processing";
+  }, 3000);
+}
+
+// --------------------
+// FINISH GENERATION
+// --------------------
+function finishGeneration(data) {
+  progressActive = false;
+  const outputUrl = `http://127.0.0.1:8000/outputs/${data.output_file}`;
+
+  audioPlayer.src = outputUrl;
+  audioPlayer.load();
+
+  statusText.textContent = "Completed ✔ Ready to play";
+  statusText.style.color = "#94a3b8";
+
+  setTimeout(() => {
+    progressSection.style.display = "none";
+    progressFill.style.width = "0%";
+    progressFill.style.background = "#38bdf8";
   }, 800);
 }
 
 // --------------------
-// Play / Pause
+// PLAY / PAUSE
 // --------------------
 playBtn.addEventListener("click", () => {
   if (!audioPlayer.src) {
@@ -126,14 +195,14 @@ playBtn.addEventListener("click", () => {
   isPlaying = !isPlaying;
 });
 
-// Reset button when audio finishes
+// reset on end
 audioPlayer.addEventListener("ended", () => {
   isPlaying = false;
   playBtn.textContent = "▶ Play";
 });
 
 // --------------------
-// Volume
+// VOLUME
 // --------------------
 audioPlayer.volume = 1;
 
@@ -142,7 +211,7 @@ volumeControl.addEventListener("input", (e) => {
 });
 
 // --------------------
-// Download
+// DOWNLOAD
 // --------------------
 downloadBtn.addEventListener("click", () => {
   if (!audioPlayer.src) {
